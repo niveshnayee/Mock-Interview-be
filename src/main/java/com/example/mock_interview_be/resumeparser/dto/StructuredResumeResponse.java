@@ -1,6 +1,5 @@
 package com.example.mock_interview_be.resumeparser.dto;
 
-import java.util.List;
 
 public class StructuredResumeResponse {
     private String id;

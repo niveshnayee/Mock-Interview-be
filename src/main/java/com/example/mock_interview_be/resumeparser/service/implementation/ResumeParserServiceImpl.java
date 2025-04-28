@@ -8,6 +8,7 @@ import com.example.mock_interview_be.resumeparser.util.FileValidationUtil;
 import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -23,11 +24,8 @@ import java.util.Map;
 @Service
 public class ResumeParserServiceImpl implements ResumeParserService {
 
-    @Autowired
-    private Tika tika;
-    @Autowired
-    private WebClient webClient;
-
+    private final Tika tika;
+    private final WebClient webClient;
     private final ClamAVScannerService clamAVScannerService;
 
     @Value("${resume.extractor.url}")
@@ -36,9 +34,11 @@ public class ResumeParserServiceImpl implements ResumeParserService {
     @Value("${resume.extractor.token}")
     private String authToken; //
 
-
-    public ResumeParserServiceImpl(ClamAVScannerService clamAVScannerService){
+    @Autowired
+    public ResumeParserServiceImpl(Tika tika, @Qualifier("authenticationWebClient") WebClient webClient, ClamAVScannerService clamAVScannerService){
         this.clamAVScannerService = clamAVScannerService;
+        this.tika = tika;
+        this.webClient = webClient;
     }
 
     @Override
@@ -73,7 +73,7 @@ public class ResumeParserServiceImpl implements ResumeParserService {
         payload.put("text", cleanedText);
         return webClient.post()
                 .uri(pythonApiUrl)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + authToken)
+                .header("Service-Name", "ResumeParsingService")  // Service name for dynamic token generation
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(payload)
